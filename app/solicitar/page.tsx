@@ -1,11 +1,12 @@
 'use client'
 
+import { Suspense } from 'react'
 import { useState } from 'react'
 import { supabase } from '../../src/lib/supabase'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 
-export default function Solicitar() {
+function FormularioSolicitar() {
   const searchParams = useSearchParams()
   const prestadorId = searchParams.get('prestador')
   const prestadorNome = searchParams.get('nome') || 'Prestador'
@@ -16,8 +17,7 @@ export default function Solicitar() {
   const [erro, setErro] = useState('')
   const [enviando, setEnviando] = useState(false)
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
+  async function handleSubmit() {
     setEnviando(true)
     setErro('')
 
@@ -116,7 +116,7 @@ export default function Solicitar() {
               </label>
               <textarea
                 rows={4}
-                placeholder="Ex: Preciso de reparar o ar condicionado do escritório. Não está a arrefecer."
+                placeholder="Ex: Preciso de reparar o ar condicionado do escritório."
                 value={descricao}
                 onChange={(e) => setDescricao(e.target.value)}
                 className="w-full border border-gray-200 rounded-lg px-4 py-3
@@ -129,8 +129,7 @@ export default function Solicitar() {
               onClick={handleSubmit}
               disabled={enviando}
               className="w-full bg-purple-700 text-white py-3 rounded-lg font-medium
-                         hover:bg-purple-800 transition-colors disabled:opacity-50
-                         disabled:cursor-not-allowed"
+                         hover:bg-purple-800 transition-colors disabled:opacity-50"
             >
               {enviando ? 'A enviar...' : 'Enviar Pedido'}
             </button>
@@ -138,5 +137,13 @@ export default function Solicitar() {
         </div>
       </section>
     </main>
+  )
+}
+
+export default function Solicitar() {
+  return (
+    <Suspense fallback={<div className="p-8 text-gray-400">A carregar...</div>}>
+      <FormularioSolicitar />
+    </Suspense>
   )
 }
