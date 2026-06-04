@@ -23,17 +23,14 @@ export default function MeusPedidos() {
   const router = useRouter()
   const [pedidos, setPedidos] = useState<Pedido[]>([])
   const [prestadores, setPrestadores] = useState<Record<number, string>>({})
+  const [avaliados, setAvaliados] = useState<Set<number>>(new Set())
   const [loading, setLoading] = useState(true)
   const [userEmail, setUserEmail] = useState('')
 
   useEffect(() => {
     async function carregar() {
       const { data: { user } } = await supabase.auth.getUser()
-
-      if (!user) {
-        router.push('/auth')
-        return
-      }
+      if (!user) { router.push('/auth'); return }
 
       setUserEmail(user.email || '')
 
@@ -48,17 +45,20 @@ export default function MeusPedidos() {
       if (pedidosData && pedidosData.length > 0) {
         const ids = [...new Set(pedidosData.map(p => p.prestador_id))]
         const { data: prestadoresData } = await supabase
-          .from('users')
-          .select('id, name')
-          .in('id', ids)
-
+          .from('users').select('id, name').in('id', ids)
         if (prestadoresData) {
           const map: Record<number, string> = {}
           prestadoresData.forEach(p => { map[p.id] = p.name })
           setPrestadores(map)
         }
-      }
 
+        const pedidoIds = pedidosData.map(p => p.id)
+        const { data: reviewsData } = await supabase
+          .from('reviews').select('pedido_id').in('pedido_id', pedidoIds)
+        if (reviewsData) {
+          setAvaliados(new Set(reviewsData.map(r => r.pedido_id)))
+        }
+      }
       setLoading(false)
     }
     carregar()
@@ -95,41 +95,49 @@ export default function MeusPedidos() {
           <h1 className="text-xl font-bold">Meus Pedidos</h1>
           <p className="text-purple-200 text-sm">{userEmail}</p>
         </div>
-        <Link href="/" className="text-purple-200 hover:text-white text-sm">
-          ← Início
-        </Link>
+        <Link href="/" className="text-purple-200 hover:text-white text-sm">← Início</Link>
       </header>
 
       <section className="max-w-4xl mx-auto px-6 py-8">
         {pedidos.length > 0 ? (
           <div className="grid gap-4">
             {pedidos.map((p) => (
-              <div key={p.id}
-                   className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+              <div key={p.id} className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
                 <div className="flex items-start justify-between mb-2">
                   <p className="text-sm text-gray-400">
                     Pedido #{p.id} · {new Date(p.created_at).toLocaleDateString('pt-PT')}
                   </p>
                   <span className={`text-xs font-medium px-3 py-1 rounded-full ${
-                    cores[p.estado] || 'bg-gray-100 text-gray-600'
-                  }`}>
+                    cores[p.estado] || 'bg-gray-100 text-gray-600'}`}>
                     {p.estado}
                   </span>
                 </div>
-
                 <p className="text-gray-800 font-medium mb-1">{p.descricao}</p>
-
                 <p className="text-sm text-gray-500 mb-3">
                   Prestador: <strong>{prestadores[p.prestador_id] || 'N/A'}</strong>
                 </p>
-
                 <div className={`text-sm p-3 rounded-lg ${
                   p.estado === 'concluido' ? 'bg-green-50 text-green-700' :
                   p.estado === 'recusado' ? 'bg-red-50 text-red-600' :
-                  'bg-gray-50 text-gray-600'
-                }`}>
+                  'bg-gray-50 text-gray-600'}`}>
                   {mensagens[p.estado] || p.estado}
                 </div>
+
+                {p.estado === 'concluido' && !avaliados.has(p.id) && (
+                  <div className="mt-4 pt-4 border-t border-gray-100">
+                    <Link href={`/avaliar?pedido=${p.id}&nome=${encodeURIComponent(prestadores[p.prestador_id] || '')}`}
+                      className="w-full block text-center bg-yellow-500 text-white py-3 rounded-lg
+                                 font-medium hover:bg-yellow-600 transition-colors">
+                      ⭐ Avaliar Serviço
+                    </Link>
+                  </div>
+                )}
+
+                {p.estado === 'concluido' && avaliados.has(p.id) && (
+                  <div className="mt-4 pt-4 border-t border-gray-100 text-center">
+                    <p className="text-sm text-green-600 font-medium">✓ Avaliação enviada</p>
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -137,9 +145,8 @@ export default function MeusPedidos() {
           <div className="bg-white rounded-xl p-12 shadow-sm border border-gray-100 text-center">
             <p className="text-4xl mb-3">📋</p>
             <p className="text-gray-400 mb-4">Ainda não fizeste nenhum pedido.</p>
-            <Link href="/"
-              className="inline-block bg-purple-700 text-white px-6 py-3 rounded-lg
-                         font-medium hover:bg-purple-800 transition-colors">
+            <Link href="/" className="inline-block bg-purple-700 text-white px-6 py-3 rounded-lg
+                       font-medium hover:bg-purple-800 transition-colors">
               Encontrar Prestador
             </Link>
           </div>
