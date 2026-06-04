@@ -13,7 +13,7 @@ export default async function Prestadores({
     ? await supabase.from('categories').select('*').eq('id', categoriaId).single()
     : { data: null }
 
-  const { data: prestadores, error } = await supabase
+  const { data: prestadores } = await supabase
     .from('users')
     .select('*')
     .eq('tipo', 'prestador')
@@ -30,32 +30,37 @@ export default async function Prestadores({
       </header>
 
       <section className="max-w-4xl mx-auto px-6 py-8">
-        <p className="text-xs text-red-500 mb-4">
-          Debug: {error ? error.message : `${prestadores?.length} resultados`}
-        </p>
-
         {prestadores && prestadores.length > 0 ? (
           <div className="grid gap-4">
             {prestadores.map((p) => (
               <div
                 key={p.id}
                 className="bg-white rounded-xl p-6 shadow-sm border border-gray-100
-                           hover:shadow-md transition-all flex items-center gap-6"
+                           hover:shadow-md transition-all"
               >
-                <div className="w-14 h-14 bg-purple-100 rounded-full flex items-center
-                                justify-center text-2xl">
-                  👤
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-gray-800">{p.name}</h3>
-                  <p className="text-gray-500 text-sm">{p.email}</p>
-                  <p className="text-gray-400 text-sm">{p.telefone}</p>
-                </div>
-                <div className="text-right">
+                <div className="flex items-center gap-6">
+                  <div className="w-14 h-14 bg-purple-100 rounded-full flex items-center
+                                  justify-center text-2xl">
+                    👤
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-gray-800">{p.name}</h3>
+                    <p className="text-gray-500 text-sm">{p.email}</p>
+                    <p className="text-gray-400 text-sm">{p.telefone}</p>
+                  </div>
                   <span className="bg-green-100 text-green-700 text-xs font-medium
                                    px-3 py-1 rounded-full">
                     Disponível
                   </span>
+                </div>
+                <div className="mt-4 pt-4 border-t border-gray-100">
+                  <Link
+                    href={`/solicitar?prestador=${p.id}&nome=${encodeURIComponent(p.name)}`}
+                    className="w-full block text-center bg-purple-700 text-white py-3
+                               rounded-lg font-medium hover:bg-purple-800 transition-colors"
+                  >
+                    Solicitar Serviço
+                  </Link>
                 </div>
               </div>
             ))}
