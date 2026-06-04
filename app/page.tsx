@@ -15,9 +15,18 @@ export default async function Home() {
 
   return (
     <main className="min-h-screen bg-gray-50">
-      <header className="bg-purple-700 text-white py-6 px-8">
-        <h1 className="text-3xl font-bold">ServiçoJá</h1>
-        <p className="text-purple-200 mt-1">Encontra o profissional certo em Luanda</p>
+      <header className="bg-purple-700 text-white py-6 px-8 flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">ServiçoJá</h1>
+          <p className="text-purple-200 mt-1">Encontra o profissional certo em Luanda</p>
+        </div>
+        <Link
+          href="/auth"
+          className="bg-white text-purple-700 px-4 py-2 rounded-lg text-sm font-medium
+                     hover:bg-purple-50 transition-colors"
+        >
+          Entrar / Registar
+        </Link>
       </header>
 
       <section className="max-w-4xl mx-auto px-6 py-10">
