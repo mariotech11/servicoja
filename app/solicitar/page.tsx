@@ -1,10 +1,14 @@
 'use client'
 
-import { Suspense } from 'react'
-import { useState } from 'react'
-import { supabase } from '../../src/lib/supabase'
+import { Suspense, useState, useEffect } from 'react'
+import { createClient } from '@supabase/supabase-js'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+)
 
 function FormularioSolicitar() {
   const searchParams = useSearchParams()
@@ -16,6 +20,13 @@ function FormularioSolicitar() {
   const [enviado, setEnviado] = useState(false)
   const [erro, setErro] = useState('')
   const [enviando, setEnviando] = useState(false)
+  const [userEmail, setUserEmail] = useState('')
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) setUserEmail(user.email || '')
+    })
+  }, [])
 
   async function handleSubmit() {
     setEnviando(true)
@@ -32,6 +43,7 @@ function FormularioSolicitar() {
       descricao: descricao,
       estado: 'pendente',
       cliente_telefone: telefone,
+      cliente_email: userEmail || null,
     })
 
     if (error) {
@@ -55,13 +67,19 @@ function FormularioSolicitar() {
             O teu pedido foi enviado para <strong>{prestadorNome}</strong>.
             Serás contactado em breve.
           </p>
-          <Link
-            href="/"
-            className="inline-block bg-purple-700 text-white px-6 py-3
-                       rounded-lg font-medium hover:bg-purple-800 transition-colors"
-          >
-            Voltar ao início
-          </Link>
+          <div className="flex gap-3">
+            <Link href="/"
+              className="flex-1 inline-block bg-purple-700 text-white px-6 py-3
+                         rounded-lg font-medium hover:bg-purple-800 transition-colors text-center">
+              Início
+            </Link>
+            <Link href="/meus-pedidos"
+              className="flex-1 inline-block bg-white text-purple-700 px-6 py-3
+                         rounded-lg font-medium border border-purple-200 hover:bg-purple-50
+                         transition-colors text-center">
+              Meus Pedidos
+            </Link>
+          </div>
         </div>
       </main>
     )
@@ -89,48 +107,27 @@ function FormularioSolicitar() {
           </h2>
 
           {erro && (
-            <div className="bg-red-50 text-red-600 text-sm p-3 rounded-lg mb-4">
-              {erro}
-            </div>
+            <div className="bg-red-50 text-red-600 text-sm p-3 rounded-lg mb-4">{erro}</div>
           )}
 
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                O teu telefone
-              </label>
-              <input
-                type="tel"
-                placeholder="Ex: 923 456 789"
-                value={telefone}
+              <label className="block text-sm font-medium text-gray-700 mb-1">O teu telefone</label>
+              <input type="tel" placeholder="Ex: 923 456 789" value={telefone}
                 onChange={(e) => setTelefone(e.target.value)}
-                className="w-full border border-gray-200 rounded-lg px-4 py-3
-                           text-gray-800 focus:outline-none focus:ring-2
-                           focus:ring-purple-500 focus:border-transparent"
-              />
+                className="w-full border border-gray-200 rounded-lg px-4 py-3 text-gray-800
+                           focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
             </div>
-
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Descrição do problema
-              </label>
-              <textarea
-                rows={4}
-                placeholder="Ex: Preciso de reparar o ar condicionado do escritório."
-                value={descricao}
-                onChange={(e) => setDescricao(e.target.value)}
-                className="w-full border border-gray-200 rounded-lg px-4 py-3
-                           text-gray-800 focus:outline-none focus:ring-2
-                           focus:ring-purple-500 focus:border-transparent resize-none"
-              />
+              <label className="block text-sm font-medium text-gray-700 mb-1">Descrição do problema</label>
+              <textarea rows={4} placeholder="Ex: Preciso de reparar o ar condicionado do escritório."
+                value={descricao} onChange={(e) => setDescricao(e.target.value)}
+                className="w-full border border-gray-200 rounded-lg px-4 py-3 text-gray-800
+                           focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none" />
             </div>
-
-            <button
-              onClick={handleSubmit}
-              disabled={enviando}
+            <button onClick={handleSubmit} disabled={enviando}
               className="w-full bg-purple-700 text-white py-3 rounded-lg font-medium
-                         hover:bg-purple-800 transition-colors disabled:opacity-50"
-            >
+                         hover:bg-purple-800 transition-colors disabled:opacity-50">
               {enviando ? 'A enviar...' : 'Enviar Pedido'}
             </button>
           </div>
